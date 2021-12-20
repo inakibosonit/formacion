@@ -26,7 +26,7 @@ object App {
       .option("driver", "com.mysql.cj.jdbc.Driver")
       .option("dbtable", "pet")
       .option("user", "root")
-      .option("password", "123aA456")
+      .option("password", "xxxxxxx")
       .load()
 
     //dataframe para la tabla de empleados
@@ -37,7 +37,7 @@ object App {
       .option("driver", "com.mysql.cj.jdbc.Driver")
       .option("dbtable", "employees")
       .option("user", "root")
-      .option("password", "123aA456")
+      .option("password", "xxxxxxx")
       .load()
 
     //dataframe para la tabla de titles
@@ -48,7 +48,7 @@ object App {
       .option("driver", "com.mysql.cj.jdbc.Driver")
       .option("dbtable", "titles")
       .option("user", "root")
-      .option("password", "123aA456")
+      .option("password", "xxxxxxx")
       .load()
 
     //dataframe para la tabla de salaries
@@ -59,7 +59,7 @@ object App {
       .option("driver", "com.mysql.cj.jdbc.Driver")
       .option("dbtable", "salaries")
       .option("user", "root")
-      .option("password", "123aA456")
+      .option("password", "xxxxxxx")
       .load()
 
     val jdbcDF5 = spark
@@ -69,7 +69,7 @@ object App {
       .option("driver", "com.mysql.cj.jdbc.Driver")
       .option("dbtable", "dept_emp")
       .option("user", "root")
-      .option("password", "123aA456")
+      .option("password", "xxxxxxx")
       .load()
 
     val jdbcDF6 = spark
@@ -79,7 +79,7 @@ object App {
       .option("driver", "com.mysql.cj.jdbc.Driver")
       .option("dbtable", "departments")
       .option("user", "root")
-      .option("password", "123aA456")
+      .option("password", "xxxxxxx")
       .load()
 
      jdbcDF.show()
