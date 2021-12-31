@@ -1,8 +1,8 @@
-1- Creación de tablas en formato texto.
+-- Creación de tablas en formato texto.
 
 CREATE DATABASE datos_padron;
 
-Crear la tabla de datos padron_txt con todos los campos del fichero CSV y cargar los
+-- Crear la tabla de datos padron_txt con todos los campos del fichero CSV y cargar los
 datos mediante el comando LOAD DATA LOCAL INPATH. La tabla tendrá formato
 texto y tendrá como delimitador de campo el caracter ';' y los campos que en el
 documento original están encerrados en comillas dobles '"' no deben estar
@@ -24,7 +24,7 @@ LOAD DATA LOCAL INPATH './Rango_Edades_Seccion_202112.csv' OVERWRITE INTO TABLE 
 
 SELECT COUNT(*) FROM padron_txt;
 
-Hacer trim sobre los datos para eliminar los espacios innecesarios guardando la
+-- Hacer trim sobre los datos para eliminar los espacios innecesarios guardando la
 tabla resultado como padron_txt_2. (Este apartado se puede hacer creando la tabla
 con una sentencia CTAS.)
 
@@ -32,9 +32,10 @@ CREATE TABLE padron_txt_2 AS Select COD_DISTRITO, trim(DESC_DISTRITO) as DESC_DI
 
 -- Investigar y entender la diferencia de incluir la palabra LOCAL en el comando LOAD DATA.
 
--- load data sin el local realiza una insercion de los datos desde la propia maquina y fichero, por otro lado incluyendo local la consola de hive buscara e incluira los datos desde HDFS.
+load data sin el local realiza una insercion de los datos desde la propia maquina y fichero, 
+por otro lado incluyendo local la consola de hive buscara e incluira los datos desde HDFS.
 
-En este momento te habrás dado cuenta de un aspecto importante, los datos nulos
+-- En este momento te habrás dado cuenta de un aspecto importante, los datos nulos
 de nuestras tablas vienen representados por un espacio vacío y no por un
 identificador de nulos comprensible para la tabla. Esto puede ser un problema para
 el tratamiento posterior de los datos. Podrías solucionar esto creando una nueva
@@ -56,7 +57,7 @@ FROM padron_txt);
 
 
 
-Una manera tremendamente potente de solucionar todos los problemas previos
+-- Una manera tremendamente potente de solucionar todos los problemas previos
 (tanto las comillas como los campos vacíos que no son catalogados como null y los
 espacios innecesarios) es utilizar expresiones regulares (regex) que nos proporciona
 OpenCSV.
@@ -83,12 +84,12 @@ which remains to be matched in the middle of string, gets replaced with a single
 Creación de una tabla a partir de los resultados de una consulta (CTAS). 
 Una consulta CREATE TABLE AS SELECT (CTAS) crea una nueva tabla a partir de los resultados de una instrucción SELECT de otra consulta. 
 
-Crear tabla Hive padron_parquet (cuyos datos serán almacenados en el formato
+-- Crear tabla Hive padron_parquet (cuyos datos serán almacenados en el formato
 columnar parquet) a través de la tabla padron_txt mediante un CTAS.
 
 CREATE TABLE padron_parquet STORED AS PARQUET AS SELECT * FROM padron_txt;
 
-Crear tabla Hive padron_parquet_2 a través de la tabla padron_txt_2 mediante un
+-- Crear tabla Hive padron_parquet_2 a través de la tabla padron_txt_2 mediante un
 CTAS. En este punto deberíamos tener 4 tablas, 2 en txt (padron_txt y
 padron_txt_2, la primera con espacios innecesarios y la segunda sin espacios
 innecesarios) y otras dos tablas en formato parquet (padron_parquet y
@@ -129,7 +130,7 @@ es común tener un montón de columnas en una tabla.
 
 
 
-Comparar el tamaño de los ficheros de los datos de las tablas padron_txt (txt),
+-- Comparar el tamaño de los ficheros de los datos de las tablas padron_txt (txt),
 padron_txt_2 (txt pero no incluye los espacios innecesarios), padron_parquet y
 padron_parquet_2 (alojados en hdfs cuya ruta se puede obtener de la propiedad
 location de cada tabla por ejemplo haciendo "show create table").
@@ -179,11 +180,11 @@ Impala vuelve a cargar los metadatos asociados antes de que continúe la consult
 Como se trata de una operación muy cara en comparación con la actualización incremental de metadatos realizada por la instrucción REFRESH,
 cuando sea posible, prefiera REFRESH en lugar de INVALIDATE METADATA.
 
-Hacer invalidate metadata en Impala de la base de datos datos_padron.
+-- Hacer invalidate metadata en Impala de la base de datos datos_padron.
 
 INVALIDATE METADATA padron_txt;
 
-Calcular el total de EspanolesHombres, espanolesMujeres, ExtranjerosHombres y
+-- Calcular el total de EspanolesHombres, espanolesMujeres, ExtranjerosHombres y
 ExtranjerosMujeres agrupado por DESC_DISTRITO y DESC_BARRIO.
 
 SELECT sum(EspanolesHombres), sum(espanolesMujeres), sum(ExtranjerosHombres), sum (extranjerosmujeres)
@@ -191,7 +192,7 @@ FROM padron_txt group by DESC_DISTRITO, DESC_BARRIO;
 
 RESULT IMPALA > Fetched 0 row(s) in 7.29s
 
-Llevar a cabo las consultas en Hive en las tablas padron_txt_2 y padron_parquet_2
+-- Llevar a cabo las consultas en Hive en las tablas padron_txt_2 y padron_parquet_2
 (No deberían incluir espacios innecesarios). ¿Alguna conclusión?
 
 SELECT sum(EspanolesHombres), sum(espanolesMujeres), sum(ExtranjerosHombres), sum (extranjerosmujeres)
@@ -204,7 +205,7 @@ FROM padron_parquet_2 group by DESC_DISTRITO, DESC_BARRIO;
 
 RESULT HIVE > Time taken: 28.716 seconds, Fetched: 132 row(s)
 
-Llevar a cabo la misma consulta sobre las mismas tablas en Impala. ¿Alguna
+-- Llevar a cabo la misma consulta sobre las mismas tablas en Impala. ¿Alguna
 conclusión?
 
 SELECT sum(CAST (EspanolesHombres AS INT)), sum( CAST(espanolesMujeres AS INT)), sum(CAST (ExtranjerosHombres AS INT)), sum (CAST (extranjerosmujeres AS INT))
@@ -219,14 +220,14 @@ RESULT IMPALA > Fetched 132 row(s) in 0.57s
 
 Las consultas son unas 30 veces mas rapidas si la tabla esta con formato parquet, hive es mucho mas lento que impala para consultas. 
 
-Crear tabla (Hive) padron_particionado particionada por campos DESC_DISTRITO y
+-- Crear tabla (Hive) padron_particionado particionada por campos DESC_DISTRITO y
 DESC_BARRIO cuyos datos estén en formato parquet.
 
 CREATE TABLE padron_particionado (DESC_DISTRITO string, COD_DIST_BARRIO string, DESC_BARRIO string, COD_DIST_SECCION string, COD_SECCION string, COD_EDAD_INT string, EspanolesHombres string, EspanolesMujeres string, ExtranjerosHombres string, ExtranjerosMujeres string) 
 partitioned by (COD_DISTRITO string, COD_BARRIO string)
 STORED AS PARQUET;
 
-Insertar datos (en cada partición) dinámicamente (con Hive) en la tabla recién
+-- Insertar datos (en cada partición) dinámicamente (con Hive) en la tabla recién
 creada a partir de un select de la tabla padron_parquet_2.
 
 set hive.exec.dynamic.partition=true;
@@ -238,11 +239,11 @@ SELECT padron_parquet_2.desc_distrito,  padron_parquet_2.cod_dist_barrio,padron_
 padron_parquet_2.cod_edad_int, padron_parquet_2.espanoleshombres, padron_parquet_2.espanolesmujeres, padron_parquet_2.extranjeroshombres, padron_parquet_2.extranjerosmujeres,
 padron_parquet_2.cod_distrito, padron_parquet_2.cod_barrio FROM padron_parquet_2;
 
-Hacer invalidate metadata en Impala de la base de datos padron_particionado.
+-- Hacer invalidate metadata en Impala de la base de datos padron_particionado.
 
 invalidate metadata padron_particionado;
 
-Calcular el total de EspanolesHombres, EspanolesMujeres, ExtranjerosHombres y
+-- Calcular el total de EspanolesHombres, EspanolesMujeres, ExtranjerosHombres y
 ExtranjerosMujeres agrupado por DESC_DISTRITO y DESC_BARRIO para los distritos
 CENTRO, LATINA, CHAMARTIN, TETUAN, VICALVARO y BARAJAS.
 
@@ -255,7 +256,7 @@ Map: 1  Reduce: 1
 HDFS Read: 951042
 Time taken: 46.698 seconds
 
-Llevar a cabo la consulta en Hive en las tablas padron_parquet y
+-- Llevar a cabo la consulta en Hive en las tablas padron_parquet y
 padron_partitionado. ¿Alguna conclusión?
 
 SELECT sum(CAST (p.EspanolesHombres AS INT)), sum( CAST(p.espanolesMujeres AS INT)), sum(CAST (p.ExtranjerosHombres AS INT)), sum (CAST (p.extranjerosmujeres AS INT))
@@ -269,7 +270,7 @@ Time taken: 39.184 seconds
 
 La lectura en HDFS es menor para el particionado.
 
-Llevar a cabo la consulta en Impala en las tablas padron_parquet y
+-- Llevar a cabo la consulta en Impala en las tablas padron_parquet y
 padron_particionado. ¿Alguna conclusión?
 
 SELECT sum(CAST (p.EspanolesHombres AS INT)), sum( CAST(p.espanolesMujeres AS INT)), sum(CAST (p.ExtranjerosHombres AS INT)), sum (CAST (p.extranjerosmujeres AS INT))
@@ -286,7 +287,7 @@ GROUP BY p.DESC_DISTRITO, p.DESC_BARRIO ;
 
 Fetched 0 row(s) in 2.19s
 
-Hacer consultas de agregación (Max, Min, Avg, Count) tal cual el ejemplo anterior
+-- Hacer consultas de agregación (Max, Min, Avg, Count) tal cual el ejemplo anterior
 con las 3 tablas (padron_txt_2, padron_parquet_2 y padron_particionado) y
 comparar rendimientos tanto en Hive como en Impala y sacar conclusiones
 
@@ -327,7 +328,7 @@ IMPALA
 Fetched 0 row(s) in 2.08s
 
 
-Crear un directorio en HDFS con un nombre a placer, por ejemplo, /test. Si estás en
+-- Crear un directorio en HDFS con un nombre a placer, por ejemplo, /test. Si estás en
 una máquina Cloudera tienes que asegurarte de que el servicio HDFS está activo ya
 que puede no iniciarse al encender la máquina (puedes hacerlo desde el Cloudera
 Manager). A su vez, en las máquinas Cloudera es posible (dependiendo de si
@@ -337,12 +338,12 @@ directorios en HDFS salvo en el directorio /user/cloudera
 
 hdfs dfs -mkdir /test
 
-Mueve tu fichero datos1 al directorio que has creado en HDFS con un comando
+-- Mueve tu fichero datos1 al directorio que has creado en HDFS con un comando
 desde consola.
 
 hadoop fs -put -f ./datos1 /test
 
-Desde Hive, crea una nueva database por ejemplo con el nombre numeros. Crea
+-- Desde Hive, crea una nueva database por ejemplo con el nombre numeros. Crea
 una tabla que no sea externa y sin argumento location con tres columnas
 numéricas, campos separados por coma y delimitada por filas. La llamaremos por
 ejemplo numeros_tbl.
@@ -352,22 +353,22 @@ ROW FORMAT DELIMITED
 FIELDS TERMINATED BY ',' 
 STORED AS TEXTFILE;
 
-Carga los datos de nuestro fichero de texto datos1 almacenado en HDFS en la tabla
+-- Carga los datos de nuestro fichero de texto datos1 almacenado en HDFS en la tabla
 de Hive. Consulta la localización donde estaban anteriormente los datos
 almacenados. ¿Siguen estando ahí? ¿Dónde están?. Borra la tabla, ¿qué ocurre con
 los datos almacenados en HDFS?
 
 Load data  inpath '/test/datos1' into table numeros_tbl;
 
-el archivo ya no existe en su ruta de hdfs (cortar - pegar), se traslada a nuestra tabla de Hive.
+-- el archivo ya no existe en su ruta de hdfs (cortar - pegar), se traslada a nuestra tabla de Hive.
 Si realizamos un drop table los datos desaparecen.
 
-Vuelve a mover el fichero de texto datos1 desde el almacenamiento local al
+-- Vuelve a mover el fichero de texto datos1 desde el almacenamiento local al
 directorio anterior en HDFS.
 
 hadoop fs -put -f ./datos1 /test
 
-Desde Hive, crea una tabla externa sin el argumento location. Y carga datos1 (desde
+-- Desde Hive, crea una tabla externa sin el argumento location. Y carga datos1 (desde
 HDFS) en ella. ¿A dónde han ido los datos en HDFS? Borra la tabla ¿Qué ocurre con
 los datos en hdfs?
 
@@ -381,7 +382,7 @@ Load data  inpath '/test/datos1' into table numeros_tbl2;
 ocurre lo mismo que en el caso anterior, los datos son trasladados desde hdfs a hive y 
 posteriormente tras borrar la tabla se eliminan estos. 
 
-Borra el fichero datos1 del directorio en el que estén. Vuelve a insertarlos en el
+-- Borra el fichero datos1 del directorio en el que estén. Vuelve a insertarlos en el
 directorio que creamos inicialmente (/test). Vuelve a crear la tabla numeros desde
 hive pero ahora de manera externa y con un argumento location que haga
 referencia al directorio donde los hayas situado en HDFS (/test). No cargues los
@@ -397,7 +398,7 @@ LOCATION '/test';
 
 si , sigue estando los datos en hdfs
 
-Inserta el fichero de datos creado al principio, "datos2" en el mismo directorio de
+-- Inserta el fichero de datos creado al principio, "datos2" en el mismo directorio de
 HDFS que "datos1". Vuelve a hacer la consulta anterior sobre la misma tabla. ¿Qué
 salida muestra?
 
@@ -406,7 +407,7 @@ select * from numeros_tbl3;
 
 la select muestra los datos1 y datos2 que se encuentran dentro de la ruta de hdfs test
 
-Extrae conclusiones de todos estos anteriores apartados.
+-- Extrae conclusiones de todos estos anteriores apartados.
 
 El comando location resulta mas util si quieres una sincronizacion de una ruta de hdfs con una tabla con hive,
 mientras load no mantiene los archivos en hdfs y solo realiza una carga de los datos, una ventaja es no depender en 
